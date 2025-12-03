@@ -69,6 +69,12 @@ app.get('/api/calendar/availability', async (req, res) => {
       return res.status(400).json({ error: 'timeMin and timeMax query params are required.' });
     }
 
+    console.log('Requesting free/busy with:', {
+  timeMin,
+  timeMax,
+  calendarId: process.env.CALENDAR_ID
+});
+
     const response = await calendar.freebusy.query({
       requestBody: {
         timeMin,
@@ -81,13 +87,20 @@ app.get('/api/calendar/availability', async (req, res) => {
     const busy = response.data.calendars[process.env.CALENDAR_ID].busy;
     res.json({ busy });
 
-  } catch (err) {
-    console.error('Error fetching free/busy:', err.response?.data || err.message);
-    res.status(500).json({ error: 'Error fetching calendar availability.' });
+} catch (err) {
+  console.error('Error fetching free/busy details:');
+  if (err.response && err.response.data) {
+    console.error(JSON.stringify(err.response.data, null, 2));
+  } else {
+    console.error(err.message);
   }
+  res.status(500).json({ error: 'Error fetching calendar availability.' });
+}
+
 });
 
 // Start server
 app.listen(process.env.PORT, () => {
   console.log(`Server listening on http://localhost:${process.env.PORT}`);
 });
+
